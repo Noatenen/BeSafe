@@ -10,9 +10,11 @@ const DuckProvider = ({ children }) => {
     const getRandomDuck = async () => {
         try {
             const response = await api.get('/ducks/random');
+            console.log('Got duck:', response.data);
             setDuck(response.data);
         } catch (error) {
             console.error('Error fetching the random duck:', error);
+            alert(`Failed to fetch duck: ${error.message}`);
         }
     };
 
@@ -30,7 +32,7 @@ const DuckProvider = ({ children }) => {
 };
 
 DuckProvider.propTypes = {
-  children: PropTypes.node.isRequired
+    children: PropTypes.node.isRequired
 };
 
 export { DuckContext, DuckProvider };
