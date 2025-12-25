@@ -1,5 +1,5 @@
 import "dotenv/config";
-import axios, { toFormData } from "axios";
+import axios  from "axios";
 
 console.log("start");
 
@@ -19,7 +19,24 @@ const ENDPOINTS = [
     path: "get_ig_user_data.php",
     form: (username) => ({ username_or_url: username }),
     essential: true,
-  }
+  },
+  {
+  key: "user_about",
+  label: "User About",
+  method: "GET",
+  path: "get_ig_user_about.php",
+  params: (username) => ({ username_or_url: username }),
+  essential: true,
+},
+{
+  key: "user_posts",
+  label: "User Posts",
+  method: "POST",
+  path: "get_ig_user_posts.php",
+  form: (username) => ({ username_or_url: username }),
+  essential: true,
+},
+
 ]
 
 //path corrector:
@@ -46,3 +63,33 @@ async function callRapid({method, path, params, form}) {
     return {status: res.status, data: res.data};
 }
 
+
+// Extract and normalize Instagram posts from a RapidAPI response
+function extractPosts(raw) { 
+  // Guard clause: ensure we received a valid plain object
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+  return { posts_returned_count: 0, items: [] };
+  }
+  const items = [];
+  // Attempt to locate the posts array across known response shapes
+  let postsArray = null;
+  if (Array.isArray(raw.items)){
+    postsArray = raw.items;
+  } else if (Array.isArray(raw.data?.items)){
+    postsArray = raw.data?.items
+  } 
+  // If no posts array was found, return an empty normalized result
+  if (!Array.isArray(postsArray)) {
+    return { posts_returned_count: 0, items: [] };
+  }
+
+  for (const post of postsArray){
+    const postNode = post.node ?? post;
+    items.push({
+      id: postNode?.id ?? null
+    })
+  }
+
+  return { posts_returned_count: items.length, items };
+
+}
