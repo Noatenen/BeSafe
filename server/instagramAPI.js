@@ -1,17 +1,16 @@
 import "dotenv/config";
-import axios  from "axios";
+import axios from "axios";
 
 console.log("start");
 
 const KEY = process.env.RAPIDAPI_KEY;
 if (!KEY) {
-  console.error("Missing RAPIDAPI_KEY in .env");
-  process.exit(1);
+  throw new Error("Missing RAPIDAPI_KEY in .env");
 }
 
 const HOST = "instagram-scraper-stable-api.p.rapidapi.com"; 
 
-const ENDPOINTS = [
+export const ENDPOINTS =  [
   {
     key: "user_data",
     label: "User Data",
@@ -36,8 +35,7 @@ const ENDPOINTS = [
   form: (username) => ({ username_or_url: username }),
   essential: true,
 },
-
-]
+];
 
 //path corrector:
 function urlFor(path) {
@@ -45,7 +43,7 @@ function urlFor(path) {
   return `https://${HOST}/${clean}`;
 }
 
-async function callRapid({method, path, params, form}) {
+export async function callRapid({method, path, params, form}) {
   const isPostForm = method === "POST" && form;
   const res = await axios.request({
     method,
@@ -55,7 +53,10 @@ async function callRapid({method, path, params, form}) {
     headers: {
         "X-RapidAPI-Key": KEY,
         "X-RapidAPI-Host": HOST,
-        ...(isPostForm ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+         ...(isPostForm
+          ? { "Content-Type":
+          "application/x-www-form-urlencoded" } 
+          : {}),
     },
     timeout: 20000,      //timeout if request over 20 sec
     validateStatus: () => true,
@@ -63,9 +64,8 @@ async function callRapid({method, path, params, form}) {
     return {status: res.status, data: res.data};
 }
 
-
 // Extract and normalize Instagram posts from a RapidAPI response
-function extractPosts(raw) { 
+export function extractPosts(raw) { 
   // Guard clause: ensure we received a valid plain object
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
   return { posts_returned_count: 0, items: [] };
@@ -73,9 +73,9 @@ function extractPosts(raw) {
   const items = [];
   // Attempt to locate the posts array across known response shapes
   let postsArray = null;
-  if (Array.isArray(raw.items)){
+  if (Array.isArray(raw.items)) {
     postsArray = raw.items;
-  } else if (Array.isArray(raw.data?.items)){
+  } else if (Array.isArray(raw.data?.items)) {
     postsArray = raw.data?.items
   } 
   // If no posts array was found, return an empty normalized result
@@ -83,7 +83,7 @@ function extractPosts(raw) {
     return { posts_returned_count: 0, items: [] };
   }
   //Adding posts items 
-  for (const post of postsArray){
+  for (const post of postsArray) {
     const postNode = post.node ?? post;
     const rawTags = postNode?.usertags?.in;
     const tagsArray = Array.isArray(rawTags) ? rawTags : [];
@@ -91,7 +91,7 @@ function extractPosts(raw) {
       username: t?.user?.username ?? null,
       full_name: t?.user?.full_name ?? null,
       is_verified: t?.user?.is_verified ?? null,
-      position: t?.position ?? null
+      position: t?.position ?? null,
     }));
     items.push({
       id: postNode?.id ?? null,
@@ -100,7 +100,7 @@ function extractPosts(raw) {
       caption_text: postNode?.caption?.text ?? null,
       accessibility_caption: postNode?.accessibility_caption ?? null,
       usertags,
-    })
+    });
   }
   return { posts_returned_count: items.length, items };
 }

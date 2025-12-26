@@ -18,12 +18,6 @@ const DuckProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        queueMicrotask(() => {
-            getRandomDuck();
-        });
-    }, []);
-
     return (
         <DuckContext.Provider value={{ duck, getRandomDuck }}>
             {children}
