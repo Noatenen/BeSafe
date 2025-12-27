@@ -154,7 +154,6 @@ export function normalizeInstagram(results, username) {
   const averageLikes = postsCount > 0 ? Math.round(totalLikes / postsCount) : 0;
   const averageComments = postsCount > 0 ? Math.round(totalComments / postsCount) : 0;
 
-
   const carouselPostsCount = posts.reduce((count, p) => {
     const tagsLen = Array.isArray(p.usertags) ? p.usertags.length : 0;
     return count + (tagsLen >= 2 ? 1 : 0);
@@ -179,15 +178,4 @@ export function normalizeInstagram(results, username) {
   };
 
   return { profile, posts, metrics };
-}
-
-// ===== Local test without API calls (run only if executed directly) =====
-if (process.env.LOCAL_TEST === "1") {
-  const results = await import("./ig_result.json", { assert: { type: "json" } })
-    .then((m) => m.default);
-
-  const username = results?.username ?? "test_user";
-
-  const normalized = normalizeInstagram(results, username);
-  console.log(JSON.stringify(normalized, null, 2));
 }

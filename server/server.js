@@ -4,11 +4,13 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import instagramRoutes from "./routes/instagram.routes.js";
+import { connectMongo } from "./src/db/mongoose.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, ".env") });
+console.log("Has MONGODB_URI?", Boolean(process.env.MONGODB_URI));
 
 const app = express();
 
@@ -27,6 +29,7 @@ app.use(cors({
 app.use("/api/instagram", instagramRoutes);
 
 // Start server
+await connectMongo();
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
