@@ -2,8 +2,12 @@ import express from "express";
 import { ENDPOINTS, callRapid, normalizeInstagram } from "../instagramAPI.js";
 import { Profile } from "../src/models/Profile.js";
 import { Post } from "../src/models/Post.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 router.post("/analyze", async (req, res) => {
@@ -29,6 +33,36 @@ router.post("/analyze", async (req, res) => {
 
     const results = {};
 
+    if (process.env.MOCK_RAPID === "true" || process.env.MOCK_RAPAD === "true") {
+
+    const mockPath = path.join(__dirname, "..", "ig_result.json");
+    const mockRaw = fs.readFileSync(mockPath, "utf8");
+    const mock = JSON.parse(mockRaw);
+
+    const rawUserData = (mock.raw ?? []).find((x) => x?.endpoint === "User Data")?.data ?? null;
+    const rawUserAbout = (mock.raw ?? []).find((x) => x?.endpoint === "User About")?.data ?? null;
+    const rawUserPosts = (mock.raw ?? []).find((x) => x?.endpoint === "User Posts")?.data ?? null;
+
+    results.user_data = { status: 200, data: rawUserData };
+    results.user_about = { status: 200, data: rawUserAbout };
+    results.user_posts = { status: 200, data: rawUserPosts };
+    
+} else {
+  for (const ep of ENDPOINTS) {
+    const params = ep.params ? ep.params(cleanUsername) : undefined;
+    const form = ep.form ? ep.form(cleanUsername) : undefined;
+
+    const r = await callRapid({
+      method: ep.method,
+      path: ep.path,
+      params,
+      form,
+    });
+
+    results[ep.key] = r;
+  }
+}
+/*
     for (const ep of ENDPOINTS) {
       const params = ep.params ? ep.params(cleanUsername) : undefined;
       const form = ep.form ? ep.form(cleanUsername) : undefined;
@@ -41,16 +75,28 @@ router.post("/analyze", async (req, res) => {
       });
 
       results[ep.key] = r;
-    }
+    }*/
     // IF API failed
     const failed = Object.entries(results).filter(([, v]) => !v || v.status < 200 || v.status >= 300);
+
     if (failed.length > 0) {
+    const debug = Object.fromEntries(
+        failed.map(([k, v]) => [
+        k,
+        {
+            status: v?.status ?? null,
+            note: "check endpoint path/host",
+        },
+        ])
+    );
+
     return res.status(502).json({
         ok: false,
         error: "rapidapi_failed",
         endpoints: Object.fromEntries(failed.map(([k, v]) => [k, v?.status ?? null])),
+        debug,
     });
-}
+    }
 
     const unpacked = {
     user_data: results.user_data?.data ?? null,

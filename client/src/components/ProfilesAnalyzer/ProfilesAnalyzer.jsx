@@ -44,7 +44,11 @@ function ProfilesAnalyzer() {
 
     const analyzeData = await analyzeRes.json();
     if (!analyzeData.ok) {
-      setLoadingText(`Error: ${analyzeData.error}`);
+      setLoadingText(
+      analyzeData.endpoints
+        ? `Error: ${analyzeData.error} | ${JSON.stringify(analyzeData.endpoints)}`
+        : `Error: ${analyzeData.error}`
+    );
       return;
     }
 

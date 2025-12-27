@@ -4,9 +4,15 @@ import axios from "axios";
 console.log("start");
 
 const KEY = process.env.RAPIDAPI_KEY;
-if (!KEY) {
+const IS_MOCK = process.env.MOCK_RAPID === "true";
+
+if (!IS_MOCK && !KEY) {
   throw new Error("Missing RAPIDAPI_KEY in .env");
 }
+/*
+if (!KEY) {
+  throw new Error("Missing RAPIDAPI_KEY in .env");
+}*/
 
 const HOST = "instagram-scraper-stable-api.p.rapidapi.com"; 
 
@@ -15,7 +21,7 @@ export const ENDPOINTS =  [
     key: "user_data",
     label: "User Data",
     method: "POST",
-    path: "get_ig_user_data.php",
+    path: "get_ig_user_data",
     form: (username) => ({ username_or_url: username }),
     essential: true,
   },
@@ -23,7 +29,7 @@ export const ENDPOINTS =  [
   key: "user_about",
   label: "User About",
   method: "GET",
-  path: "get_ig_user_about.php",
+  path: "get_ig_user_about",
   params: (username) => ({ username_or_url: username }),
   essential: true,
 },
@@ -31,7 +37,7 @@ export const ENDPOINTS =  [
   key: "user_posts",
   label: "User Posts",
   method: "POST",
-  path: "get_ig_user_posts.php",
+  path: "get_ig_user_posts",
   form: (username) => ({ username_or_url: username }),
   essential: true,
 },
@@ -61,6 +67,9 @@ export async function callRapid({method, path, params, form}) {
     timeout: 20000,      //timeout if request over 20 sec
     validateStatus: () => true,
     });
+    if (res.status === 404) {
+      console.log("[RapidAPI 404]", method, urlFor(path));
+    }
     return {status: res.status, data: res.data};
 }
 
@@ -110,8 +119,13 @@ export function extractPosts(raw) {
   if (Array.isArray(raw.items)) {
     postsArray = raw.items;
   } else if (Array.isArray(raw.data?.items)) {
-    postsArray = raw.data?.items
-  } 
+    postsArray = raw.data.items;
+  } else if (Array.isArray(raw.posts)) {
+    postsArray = raw.posts;
+  } else if (Array.isArray(raw.data?.posts)) {
+    postsArray = raw.data.posts;
+  }
+
   // If no posts array was found, return an empty normalized result
   if (!Array.isArray(postsArray)) {
     return { posts_returned_count: 0, items: [] };
