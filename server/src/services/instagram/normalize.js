@@ -1,77 +1,3 @@
-import "dotenv/config";
-import axios from "axios";
-
-console.log("start");
-
-const KEY = process.env.RAPIDAPI_KEY;
-const IS_MOCK = process.env.MOCK_RAPID === "true";
-
-if (!IS_MOCK && !KEY) {
-  throw new Error("Missing RAPIDAPI_KEY in .env");
-}
-/*
-if (!KEY) {
-  throw new Error("Missing RAPIDAPI_KEY in .env");
-}*/
-
-const HOST = "instagram-scraper-stable-api.p.rapidapi.com"; 
-
-export const ENDPOINTS =  [
-  {
-    key: "user_data",
-    label: "User Data",
-    method: "POST",
-    path: "get_ig_user_data",
-    form: (username) => ({ username_or_url: username }),
-    essential: true,
-  },
-  {
-  key: "user_about",
-  label: "User About",
-  method: "GET",
-  path: "get_ig_user_about",
-  params: (username) => ({ username_or_url: username }),
-  essential: true,
-},
-{
-  key: "user_posts",
-  label: "User Posts",
-  method: "POST",
-  path: "get_ig_user_posts",
-  form: (username) => ({ username_or_url: username }),
-  essential: true,
-},
-];
-
-//path corrector:
-function urlFor(path) {
-  const clean = path.startsWith("/") ? path.slice(1) : path;
-  return `https://${HOST}/${clean}`;
-}
-
-export async function callRapid({method, path, params, form}) {
-  const isPostForm = method === "POST" && form;
-  const res = await axios.request({
-    method,
-    url: urlFor(path),
-    params,
-    data: isPostForm ? new URLSearchParams(form).toString() : undefined,
-    headers: {
-        "X-RapidAPI-Key": KEY,
-        "X-RapidAPI-Host": HOST,
-         ...(isPostForm
-          ? { "Content-Type":
-          "application/x-www-form-urlencoded" } 
-          : {}),
-    },
-    timeout: 20000,      //timeout if request over 20 sec
-    validateStatus: () => true,
-    });
-    if (res.status === 404) {
-      console.log("[RapidAPI 404]", method, urlFor(path));
-    }
-    return {status: res.status, data: res.data};
-}
 
 // Extract and normalize Instagram basic data from a RapidAPI response
 export function extractProfile(rawUserData, username) { 
@@ -105,7 +31,6 @@ export function extractProfile(rawUserData, username) {
     hd_profile_pic_url: u?.hd_profile_pic_url_info?.url ?? u?.hd_profile_pic_url ?? null,
   };
 }
-
 
 // Extract and normalize Instagram posts from a RapidAPI response
 export function extractPosts(raw) { 
