@@ -64,9 +64,43 @@ export async function callRapid({method, path, params, form}) {
     return {status: res.status, data: res.data};
 }
 
+// Extract and normalize Instagram basic data from a RapidAPI response
+export function extractProfile(rawUserData, username) { 
+  // ensure we received a valid plain object
+  if (!rawUserData || typeof rawUserData !== "object" || Array.isArray(rawUserData)) {
+  return {
+    username: username ?? null,
+    full_name: null,
+    is_verified: null,
+    is_private: null,
+    biography: null,
+    external_url: null,
+    profile_pic_url: null,
+    hd_profile_pic_url: null,
+  };
+  }
+  const u =
+    rawUserData?.user ??
+    rawUserData?.data?.user ??
+    rawUserData?.data ??
+    rawUserData;
+
+  return {
+    username: username ?? u?.username ?? null,
+    full_name: u?.full_name ?? null,
+    is_verified: u?.is_verified ?? null,
+    is_private: u?.is_private ?? null,
+    biography: u?.biography ?? null,
+    external_url: u?.external_url ?? u?.website ?? null,
+    profile_pic_url: u?.profile_pic_url ?? null,
+    hd_profile_pic_url: u?.hd_profile_pic_url_info?.url ?? u?.hd_profile_pic_url ?? null,
+  };
+}
+
+
 // Extract and normalize Instagram posts from a RapidAPI response
 export function extractPosts(raw) { 
-  // Guard clause: ensure we received a valid plain object
+  // ensure we received a valid plain object
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
   return { posts_returned_count: 0, items: [] };
   }
@@ -103,4 +137,57 @@ export function extractPosts(raw) {
     });
   }
   return { posts_returned_count: items.length, items };
+}
+
+//Merge profile data and posts results
+export function normalizeInstagram(results, username) { 
+  const profile = extractProfile(results?.user_data, username);
+
+  const postsNormalized = extractPosts(results?.user_posts);
+  const posts = postsNormalized.items;
+
+  // ---- Metrics calculations ----
+  const safeNum = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  const postsCount = posts.length;
+  const totalLikes = posts.reduce((sum, p) => sum + safeNum(p.like_count), 0);
+  const totalComments = posts.reduce((sum, p) => sum + safeNum(p.comment_count), 0);
+  const averageLikes = postsCount > 0 ? Math.round(totalLikes / postsCount) : 0;
+  const averageComments = postsCount > 0 ? Math.round(totalComments / postsCount) : 0;
+
+
+  const carouselPostsCount = posts.reduce((count, p) => {
+    const tagsLen = Array.isArray(p.usertags) ? p.usertags.length : 0;
+    return count + (tagsLen >= 2 ? 1 : 0);
+  }, 0);
+
+  const taggedSet = new Set();
+  for (const p of posts) {
+    if (!Array.isArray(p.usertags)) continue;
+    for (const t of p.usertags) {
+      const uname = typeof t?.username === "string" ? t.username.trim() : "";
+      if (uname) taggedSet.add(uname.toLowerCase());
+    }
+  }
+  const uniqueTaggedUsersCount = taggedSet.size;
+
+  const metrics = {
+    posts_returned_count: postsNormalized.posts_returned_count,
+    average_likes: averageLikes,
+    average_comments: averageComments,
+    carousel_posts_count: carouselPostsCount,
+    unique_tagged_users_count: uniqueTaggedUsersCount,
+  };
+
+  return { profile, posts, metrics };
+}
+
+// ===== Local test without API calls (run only if executed directly) =====
+if (process.env.LOCAL_TEST === "1") {
+  const results = await import("./ig_result.json", { assert: { type: "json" } })
+    .then((m) => m.default);
+
+  const username = results?.username ?? "test_user";
+
+  const normalized = normalizeInstagram(results, username);
+  console.log(JSON.stringify(normalized, null, 2));
 }

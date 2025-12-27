@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import api from '../services/api';
 

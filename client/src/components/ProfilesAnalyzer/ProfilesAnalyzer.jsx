@@ -62,8 +62,7 @@ function ProfilesAnalyzer() {
         
     {platform === 'instagram' && (
         <div className={styles.instagramFields}>
-          <h4>Instagram details</h4>
-
+          <h4>Instagram Follows details:</h4>
           <label>
             Followers Number:
             <input
