@@ -73,7 +73,7 @@ function follows (followers, following, reasons){
 }
 
 /* avarge likes on posts
-    under 20 -> score += 20
+    under 20 -> score += 22
     under 50 -> score += 10
 */
 function avgLikes(m, reasons) {
@@ -81,7 +81,7 @@ function avgLikes(m, reasons) {
 
   if (m.average_likes < 20) {
     reasons.push("Very low average likes");
-    return 20;
+    return 22;
   }
 
   if (m.average_likes < 40) {
@@ -93,28 +93,28 @@ function avgLikes(m, reasons) {
 }
 
 /* avarge comments on posts
-    under 2 -> score += 10
+    under 2 -> score += 15
 */
 function avgCom(m, reasons) {
   if (typeof m.average_comments !== "number") return 0;
 
   if (m.average_comments < 2) {
     reasons.push("Very low average comments");
-    return 10;
+    return 15;
   }
 
   return 0;
 }
 
 /* How many users tagged on posts
-    0 tags -> score += 5
+    0 tags -> score += 8
 */
 function friendsTag(m, reasons) {
   if (typeof m.unique_tagged_users_count !== "number") return 0;
 
   if (m.unique_tagged_users_count === 0) {
     reasons.push("No tagged users in recent posts");
-    return 5;
+    return 8;
   }
 
   return 0;
