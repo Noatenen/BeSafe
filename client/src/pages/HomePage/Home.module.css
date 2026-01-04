@@ -22,3 +22,43 @@
   color: var(--text-muted);
   line-height: 1.7;
 }
+
+.page {
+  width: 100%;
+}
+
+.checkPanel {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.checkPanelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.checkPanelTitle {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.checkPanelSubtitle {
+  margin: 8px 0 0;
+  font-size: 16px;
+  opacity: 0.75;
+}
+
+.closeBtn {
+  border: 1px solid rgba(6, 22, 147, 0.35);
+  background: #fff;
+  color: #061693;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}

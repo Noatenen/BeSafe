@@ -1,65 +1,71 @@
+import PropTypes from "prop-types";
 import styles from "./CheckSection.module.css";
+import CheckCard from "./CheckCard";
 
-import messageIcon from "../../assets/images/message.svg";
-import linkIcon from "../../assets/images/link.svg";
 import uploadIcon from "../../assets/images/upload.svg";
+import linkIcon from "../../assets/images/link.svg";
+import messageIcon from "../../assets/images/message.svg";
 
-export default function CheckSection() {
+function CheckSection(props) {
+  var onSelect = props.onSelect;
+  var activeType = props.activeType;
+
   return (
-    <section className={styles.section} id="checks" aria-label="מה אפשר לבדוק">
-      <div className={styles.container}>
+    <section className={styles.section} aria-label="מה אפשר לבדוק?">
+      <div className={styles.inner}>
         <h2 className={styles.title}>מה אפשר לבדוק?</h2>
         <p className={styles.subtitle}>
           המערכת שלנו תומכת בסוגי תוכן שונים - כדי לשמור עליך ברשת
         </p>
 
-        <div className={styles.cards}>
-          {/* 1) ניתוח טקסט - צריך להיות מימין */}
-          <article className={styles.card}>
-            <div className={styles.cardHeader}>
-                              <h3 className={styles.cardTitle}>ניתוח טקסט</h3>
-              <img className={styles.icon} src={messageIcon} alt="" />
+        <div className={styles.grid}>
+          <CheckCard
+            title="ניתוח טקסט"
+            text={
+              "בדיקת הודעות, פוסטים ומיילים\nלזיהוי קללות, שיח פוגעני,\nנסיונות הונאה וסימנים לבריאות ברשת"
+            }
+            icon={messageIcon}
+            type="text"
+            isActive={activeType === "text"}
+            onClick={onSelect}
+          />
 
-            </div>
+          <CheckCard
+            title="בדיקת לינקים"
+            text={
+              "בדיקה האם הקישור בטוח לפני\nשלוחצים עליו\n(פישינג, אתרים חשודים, התחזות)"
+            }
+            icon={linkIcon}
+            type="links"
+            isActive={activeType === "links"}
+            onClick={onSelect}
+          />
 
-            <p className={styles.cardText}>
-  בדיקת הודעות, פוסטים ומיילים <br />
-  לזיהוי קללות, שיח פוגעני, נסיונות <br />
-  הונאה וסימנים לבריאות ברשת
-</p>
-
-          </article>
-
-          {/* 2) בדיקת קישורים - באמצע */}
-          <article className={styles.card}>
-            <div className={styles.cardHeader}>
-                 <h3 className={styles.cardTitle}>בדיקת קישורים</h3>
-              <img className={styles.icon} src={linkIcon} alt="" />
-             
-            </div>
-
-            <p className={styles.cardText}>
-  בדיקה האם הקישור בטוח לפני <br />
-  שלוחצים עליו <br />
-  (פישינג, אתרים חשודים, התחזות)
-</p>
-
-          </article>
-
-          {/* 3) בדיקת תמונות - משמאל */}
-          <article className={styles.card}>
-            <div className={styles.cardHeader}>
-                 <h3 className={styles.cardTitle}>בדיקת תמונות</h3>
-              <img className={styles.icon} src={uploadIcon} alt="" />
-             
-            </div>
-
-            <p className={styles.cardText}>
-              בדיקת טקסט מתוך תמונות כדי להבין דפוסי דיבור ומילים פוגעניות
-            </p>
-          </article>
+          <CheckCard
+            title="בדיקת תמונות"
+            text={
+              "בדיקת טקסט מתוך תמונות כדי להבין\nדפוסי דיבור ומילים פוגעניות"
+            }
+            icon={uploadIcon}
+            type="images"
+            isActive={activeType === "images"}
+            onClick={onSelect}
+          />
         </div>
       </div>
     </section>
   );
 }
+
+/* 🔒 PropTypes – חובה בגלל ESLint */
+CheckSection.propTypes = {
+  onSelect: PropTypes.func,
+  activeType: PropTypes.string,
+};
+
+CheckSection.defaultProps = {
+  onSelect: null,
+  activeType: "",
+};
+
+export default CheckSection;
