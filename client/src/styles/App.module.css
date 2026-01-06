@@ -12,10 +12,6 @@
   justify-content: space-between;
 }
 
-.appLogo {
-  height: 100px;
-}
-
 .appNav {
   display: flex;
   gap: 20px;
@@ -33,7 +29,7 @@
 
 .main {
   padding: 20px;
-  background-color: #FFDCE8;
+  background-color:antiquewhite;
   height: 100vh;
 }
 
