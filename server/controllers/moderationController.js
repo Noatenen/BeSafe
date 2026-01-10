@@ -1,9 +1,8 @@
 import { BAD_PATTERNS } from "../data/badWords.he.js";
 import fetch from "node-fetch";
 
-
 /* =========================
-   נרמול טקסט (הקוד המקורי שלך)
+   נרמול טקסט (ללא שינוי)
    ========================= */
 function normalizeText(str) {
   let s = (str || "").toLowerCase();
@@ -26,8 +25,8 @@ function findBadWords(text) {
 }
 
 /* ==============================================
-   פונקציית ניתוח עמוק - ה"מוח" של המערכת
-   מנתחת הקשר, סחיטה, פישינג וסלנג ישראלי
+   פונקציית ניתוח עמוק - AI
+   עדכון: הציון כעת הוא 1-5
    ============================================== */
 async function getDeepAIAnalysis(text) {
   try {
@@ -38,28 +37,33 @@ async function getDeepAIAnalysis(text) {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // דגם חכם, מהיר וזול
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `אתה מומחה בטיחות ברשת (Cyber Safety) הממוקד בהגנה על ילדים ובני נוער.
-            תפקידך לנתח הודעות טקסט בעברית ולזהות איומים מורכבים שאינם רק קללות.
-            
-            חפש את הקטגוריות הבאות:
-            1. phishing: בקשת פרטים אישיים, סיסמאות, קוד אימות SMS, או הבטחות שווא (כמו "זכית בפרס").
-            2. extortion: סחיטה מינית או חברתית (למשל: "אם לא תשלם/תשלח תמונה אני אפרסם עליך...").
-            3. bullying: השפלה, חרם, הטרדה או איומים באלימות.
-            4. threat: איומים לפגיעה פיזית או פגיעה בפרטיות.
-            5. safe: הודעה תקינה ללא כוונת זדון.
+            content: `אתה מומחה בטיחות ברשת (Cyber Safety).
+            תפקידך לנתח הודעות טקסט בעברית ולדרג את הסיכון בסולם של 1 עד 5.
 
-            דגשים לסלנג ישראלי: זהה מילים כמו 'סקאם', 'נודר', 'עוקץ', 'ניוד'.
+            סולם הדירוג:
+            1 = Safe (בטוח לגמרי, שיחה רגילה)
+            2 = Low Risk (חשד קל, אולי סלנג לא נעים אבל לא מסוכן)
+            3 = Suspicious (חשוד - קללות, הצקות, או ניסיון בסיסי להונאה)
+            4 = Dangerous (מסוכן - בריונות קשה, איומים, פישינג ברור)
+            5 = Severe Risk (סכנה מיידית - סחיטה, עבירות מין, איום ממשי לחיים)
             
-            החזר אך ורק אובייקט JSON תקין בפורמט הבא:
+            קטגוריות לזיהוי:
+            - phishing
+            - extortion
+            - bullying
+            - threat
+            - safe
+
+            החזר אובייקט JSON בלבד:
             {
-              "severity": (מספר בין 0 ל-100 המייצג את רמת הסיכון),
-              "category": "phishing" | "bullying" | "extortion" | "threat" | "safe",
-              "explanation": "הסבר קצר ופשוט לילד בעברית על מה שזיהית",
-              "urgent_action": "הנחיה מעשית לילד: מה לעשות עכשיו (למשל: לחסום, לא לענות, לספר להורה)"
+              "score": (מספר שלם בין 1 ל-5),
+              "category": "category_name",
+              "explanation": "הסבר קצר לילד בעברית",
+              "urgent_action": "הנחיה קצרה מה לעשות"
             }`
           },
           { role: "user", content: text }
@@ -70,31 +74,28 @@ async function getDeepAIAnalysis(text) {
 
     const data = await response.json();
 
-    // בדיקה אם חזרה שגיאה מ-OpenAI
     if (data.error) {
-      console.error("OpenAI API Error:", data.error.message);
       throw new Error(data.error.message);
     }
 
     let rawContent = data.choices[0].message.content;
-    
-    // ניקוי Markdown אם המודל הוסיף בטעות
     rawContent = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
 
     const parsedResult = JSON.parse(rawContent);
 
-    // וידוא שהציון הוא אכן מספר
-    parsedResult.severity = Number(parsedResult.severity);
+    // וידוא שהציון הוא מספר בטווח הנכון
+    parsedResult.score = Number(parsedResult.score);
+    if (isNaN(parsedResult.score)) parsedResult.score = 1; // Fallback
 
     return parsedResult;
 
   } catch (err) {
-    console.error("AI Analysis Detailed Error:", err);
-    // במקרה של שגיאה טכנית, נחזיר אובייקט ברירת מחדל בטוח
+    console.error("AI Analysis Error:", err);
+    // במקרה שגיאה נחזיר ציון ניטרלי/נמוך כדי לא לתקוע את המערכת
     return { 
-      severity: 0, 
+      score: 1, 
       category: "safe", 
-      explanation: "לא הצלחנו לנתח את ההודעה כרגע. אם יש ספק - כדאי להתייעץ עם מבוגר.", 
+      explanation: "לא הצלחנו לנתח את ההודעה כרגע.", 
       urgent_action: "" 
     };
   }
@@ -111,36 +112,52 @@ export async function moderateText(req, res) {
       return res.status(400).json({ error: "Missing text" });
     }
 
-    // הפעלת ה-Regex וה-AI במקביל לחיסכון בזמן
-    const foundBadWords = findBadWords(text);
-    const aiAnalysis = await getDeepAIAnalysis(text);
+    // הרצה במקביל
+    const [foundBadWords, aiAnalysis] = await Promise.all([
+        Promise.resolve(findBadWords(text)), // עטפנו ב-promise כדי שיתאים ל-all בצורה נקייה
+        getDeepAIAnalysis(text)
+    ]);
 
-    // שקלול ציון סופי
-    // אנחנו נותנים משקל גבוה ל-AI, אבל אם ה-Regex מצא קללה בוטה, זה מינימום 50
-    let finalRiskScore = aiAnalysis.severity;
-    if (foundBadWords.length > 0 && finalRiskScore < 50) {
-      finalRiskScore = 50 + (foundBadWords.length * 5); 
-    }
+    // --- חישוב ציון משוקלל (1-5) ---
     
-    finalRiskScore = Math.min(finalRiskScore, 100);
+    // מתחילים מהציון של ה-AI
+    let finalScore = aiAnalysis.score;
 
-    // קביעת צבע/רמת סיכון
-    let riskLevel = "green";
-    if (finalRiskScore >= 75) riskLevel = "red";
-    else if (finalRiskScore >= 40) riskLevel = "yellow";
+    // לוגיקת Regex: אם נמצאו מילים אסורות, הציון לא יכול להיות נמוך מ-3
+    // (כדי למנוע מצב שה-AI מפספס קללה והציון נשאר 1)
+    if (foundBadWords.length > 0) {
+        // אם הציון היה נמוך (1 או 2), נקפיץ אותו ל-3 לפחות
+        // אם יש המון מילים גסות (יותר מ-2), נקפיץ ל-4
+        if (foundBadWords.length > 2) {
+             finalScore = Math.max(finalScore, 4);
+        } else {
+             finalScore = Math.max(finalScore, 3);
+        }
+    }
 
-    // שליחת התשובה המלאה לפרונט
+    // וידוא גבולות 1-5
+    finalScore = Math.min(5, Math.max(1, finalScore));
+
+    // --- קביעת Verdict (כמו אצל אריאל) ---
+    let verdict = "unknown";
+    if (finalScore < 1.6) verdict = "safe";
+    else if (finalScore < 2.6) verdict = "low risk";
+    else if (finalScore < 3.6) verdict = "suspicious";
+    else if (finalScore < 4.6) verdict = "dangerous";
+    else verdict = "severe risk";
+
+    // שליחת התשובה
     return res.json({
       success: true,
       text,
-      riskScore: finalRiskScore,
-      riskLevel,
+      score: finalScore,      // המספר 1-5
+      verdict,                // הטקסט (safe, suspicious...)
       category: aiAnalysis.category,
       explanation: aiAnalysis.explanation,
       recommendation: aiAnalysis.urgent_action,
       details: {
         regexFound: foundBadWords,
-        aiSeverity: aiAnalysis.severity
+        aiRawScore: aiAnalysis.score
       }
     });
 

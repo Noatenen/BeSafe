@@ -1,5 +1,5 @@
-import { useState } from "react"; // 1. הסרנו את useEffect כדי למנוע את שגיאת ה-unused-vars
-import PropTypes from "prop-types"; // 2. ייבוא PropTypes כדי להגדיר את onClose
+import { useState } from "react";
+import PropTypes from "prop-types";
 
 function TextAnalyzer({ onClose }) {
   const [text, setText] = useState("");
@@ -23,26 +23,55 @@ function TextAnalyzer({ onClose }) {
     setLoading(true);
 
     try {
+      // הנחת עבודה: השרת רץ בפורט 4000
       const resp = await fetch("http://localhost:4000/api/moderate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text })
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error();
+      
+      if (!resp.ok) throw new Error(data.error || "Server Error");
+      
       setResult(data);
-    } catch {
-      setError("משהו השתבש בחיבור לשרת. בדקי שהשרת רץ.");
+    } catch (err) {
+      console.error(err);
+      setError("משהו השתבש בחיבור לשרת. בדקו שהשרת רץ.");
     } finally {
       setLoading(false);
     }
   }
 
-  const theme = result ? (
-    result.riskLevel === "red" ? { color: "#FF4D4D", icon: "🚨", status: "זיהינו סכנה!" } :
-    result.riskLevel === "yellow" ? { color: "#FFC107", icon: "⚠️", status: "חשוב להיזהר" } :
-    { color: "#2ECC71", icon: "✅", status: "הכל נראה בטוח" }
-  ) : { color: "#3D5A80" };
+  // --- לוגיקת עיצוב חדשה לפי דירוג 1-5 ---
+  const getTheme = (score) => {
+    // 4-5: סכנה
+    if (score >= 4) {
+      return { 
+        color: "#FF4D4D", 
+        icon: "🚨", 
+        status: "זוהתה סכנה", 
+        bg: "#FFF5F5" 
+      };
+    }
+    // 3: חשוד
+    if (score >= 2.6) { // מותאם ללוגיקה בשרת (מעל 2.6 זה כבר suspicious)
+      return { 
+        color: "#FFC107", 
+        icon: "⚠️", 
+        status: "חשוב להיזהר", 
+        bg: "#FFFBEB" 
+      };
+    }
+    // 1-2.5: בטוח / סיכון נמוך
+    return { 
+      color: "#2ECC71", 
+      icon: "✅", 
+      status: "הכל נראה בטוח", 
+      bg: "#F0FFF4" 
+    };
+  };
+
+  const theme = result ? getTheme(result.score) : { color: "#3D5A80" };
 
   return (
     <div style={{
@@ -148,21 +177,33 @@ function TextAnalyzer({ onClose }) {
           <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
             <span style={{ fontSize: "45px" }}>{theme.icon}</span>
             <div>
-              <h3 style={{ margin: 0, fontSize: "26px", color: theme.color, fontWeight: "800" }}>{theme.status}</h3>
-              <p style={{ margin: 0, color: "#718096", fontSize: "16px" }}>ציון סיכון: {result.riskScore}%</p>
+              <h3 style={{ margin: 0, fontSize: "26px", color: theme.color, fontWeight: "800" }}>
+                {theme.status}
+              </h3>
+              {/* כאן השינוי העיקרי בתצוגה ל-1 עד 5 */}
+              <p style={{ margin: 0, color: "#718096", fontSize: "16px", fontWeight: "600" }}>
+                 דירוג סיכון: <span style={{ color: theme.color, fontSize: "20px" }}>{result.score}</span> / 5
+              </p>
             </div>
           </div>
 
           <div style={{ marginBottom: "20px" }}>
             <h4 style={{ fontSize: "17px", color: "#2D3748", marginBottom: "8px", fontWeight: "700" }}>ניתוח המערכת:</h4>
-            <div style={{ backgroundColor: "#F8FAFC", padding: "20px", borderRadius: "15px", fontSize: "17px", color: "#1A365D", border: "1px solid #E2E8F0" }}>
+            <div style={{ 
+                backgroundColor: "#F8FAFC", 
+                padding: "20px", 
+                borderRadius: "15px", 
+                fontSize: "17px", 
+                color: "#1A365D", 
+                border: "1px solid #E2E8F0" 
+            }}>
               {result.explanation}
             </div>
           </div>
 
           {result.recommendation && (
             <div style={{
-              backgroundColor: result.riskLevel === "green" ? "#F0FFF4" : "#FFFBEB",
+              backgroundColor: theme.bg, // משתמשים ברקע העדין שהגדרנו ב-theme
               padding: "20px",
               borderRadius: "15px",
               borderRight: `6px solid ${theme.color}`,
@@ -182,7 +223,6 @@ function TextAnalyzer({ onClose }) {
   );
 }
 
-// 🔒 הוספת הגדרת ה-PropTypes כדי למנוע את השגיאה השנייה
 TextAnalyzer.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
