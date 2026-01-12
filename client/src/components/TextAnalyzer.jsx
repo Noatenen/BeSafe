@@ -84,8 +84,9 @@ function TextAnalyzer({ onClose }) {
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
         {/* --- החרגתי את הכותרת (שתהיה בפונט המקורי) --- */}
         <h2 style={{ 
-            fontSize: "34px", color: "#1A375D", marginBottom: "8px", fontWeight: "800",
-            fontFamily: "sans-serif" 
+            fontSize: "34px", color: "#1A375D", marginBottom: "8px",
+            fontWeight: "normal", // Omes נראה טוב יותר במשקל רגיל
+            fontFamily: "'Omes', sans-serif"
         }}>
             ניתוח טקסט חכם
         </h2>

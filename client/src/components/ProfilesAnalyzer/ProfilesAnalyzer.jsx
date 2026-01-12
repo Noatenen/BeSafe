@@ -114,8 +114,8 @@ function ProfilesAnalyzer({ onClose }) {
             fontSize: "34px", 
             color: "#1A375D", 
             marginBottom: "8px", 
-            fontWeight: "800",
-            fontFamily: "sans-serif" 
+fontWeight: "normal", // Omes נראה טוב יותר במשקל רגיל
+            fontFamily: "'Omes', sans-serif"
         }}>
             בדיקת פרופיל מתחזה
         </h2>
@@ -160,7 +160,7 @@ function ProfilesAnalyzer({ onClose }) {
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", color: "#2D3748" }}>שם משתמש:</label>
         <input
           type="text"
-          placeholder="noa_kirel / official_page..."
+          placeholder="noa_kirel"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           style={{

@@ -54,15 +54,17 @@ function LinkCheckerTab() {
       boxSizing: "border-box",
       position: "relative",
       textAlign: "right",
-      // --- הוספתי כאן את הפונט הראשי ---
       fontFamily: "'Rubik', sans-serif"
     }}>
 
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
-        {/* --- החרגתי את הכותרת (שתהיה בפונט המקורי) --- */}
+        {/* --- כאן השינוי: שימוש בפונט המיוחד שלך 'Omes' --- */}
         <h2 style={{ 
-            fontSize: "34px", color: "#1A375D", marginBottom: "8px", fontWeight: "800",
-            fontFamily: "sans-serif"
+            fontSize: "40px", 
+            color: "#1A375D", 
+            marginBottom: "8px", 
+            fontWeight: "normal", // בפונטים מיוחדים לפעמים עדיף normal
+            fontFamily: "'Omes', sans-serif" 
         }}>
             בדיקת לינקים חשודים
         </h2>
@@ -86,7 +88,6 @@ function LinkCheckerTab() {
           style={{
             width: "100%", height: "50px", border: "none", fontSize: "19px", outline: "none",
             color: "#2D3748", direction: "ltr", textAlign: "left",
-            // --- הוספתי כאן את הפונט לאינפוט ---
             fontFamily: "'Rubik', sans-serif"
           }}
         />
@@ -101,7 +102,6 @@ function LinkCheckerTab() {
           cursor: !url || loading ? "not-allowed" : "pointer",
           opacity: !url || loading ? 0.7 : 1,
           boxShadow: "0 6px 15px rgba(74, 144, 226, 0.2)",
-          // --- הוספתי כאן את הפונט לכפתור ---
           fontFamily: "'Rubik', sans-serif"
         }}
       >
