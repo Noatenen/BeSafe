@@ -114,8 +114,8 @@ function ProfilesAnalyzer({ onClose }) {
             fontSize: "34px", 
             color: "#1A375D", 
             marginBottom: "8px", 
-            fontWeight: "800",
-            fontFamily: "sans-serif" 
+            fontWeight: "normal", // בפונטים מיוחדים לפעמים עדיף normal
+            fontFamily: "'Omes', sans-serif"
         }}>
             בדיקת פרופיל מתחזה
         </h2>

@@ -61,8 +61,9 @@ function LinkCheckerTab() {
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
         {/* --- החרגתי את הכותרת (שתהיה בפונט המקורי) --- */}
         <h2 style={{ 
-            fontSize: "34px", color: "#1A375D", marginBottom: "8px", fontWeight: "800",
-            fontFamily: "sans-serif"
+            fontSize: "34px", color: "#1A375D", marginBottom: "8px",
+            fontWeight: "normal", // בפונטים מיוחדים לפעמים עדיף normal
+            fontFamily: "'Omes', sans-serif"
         }}>
             בדיקת לינקים חשודים
         </h2>
