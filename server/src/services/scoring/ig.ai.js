@@ -26,15 +26,15 @@ export async function analyzeCaptionsAi(captions, { username } = {}) {
 
   "IMPORTANT:",
   "The output is shown directly to an end user (non-technical).",
-  "Write reasons in clear, friendly, and neutral language.",
+  "Write one sentence reason in clear, friendly, and neutral language. in one sentence in Hebrew!",
   "Do NOT use technical or AI-related terms.",
   "Do NOT sound judgmental or accusatory.",
-  "Each reason should explain *what was observed*, not *what the model thinks*.",
-  "Reasons should be short, understandable, and customer-facing.",
-
+  "The reason should explain *what was observed*, not *what the model thinks*.",
+  "Reason should be short, understandable, and customer-facing. in one sentence in Hebrew!",
+  "Return EXACTLY ONE reason.Do not return multiple reasons.",
   "Return STRICT JSON with the following keys only:",
   "- suspiciousness (number between 0 and 1)",
-  "- reasons (array of short strings)",
+  "- - reason (string, exactly one sentence in Hebrew)",
 
   `Username: ${username || "unknown"}`,
     clean.map((c, i) => `${i + 1}. ${c}`).join("\n"),
@@ -52,20 +52,18 @@ export async function analyzeCaptionsAi(captions, { username } = {}) {
     const parsed = JSON.parse(text);
 
     const suspiciousnessRaw = parsed?.suspiciousness;
-    const reasonsRaw = parsed?.reasons;
+    const reasonRaw = parsed?.reasons;
 
     const suspiciousness = Number.isFinite(Number(suspiciousnessRaw))
       ? Math.max(0, Math.min(1, Number(suspiciousnessRaw)))
       : 0;
 
-    const reasons = Array.isArray(reasonsRaw)
-      ? reasonsRaw
-          .map((r) => (typeof r === "string" ? r.trim() : ""))
-          .filter(Boolean)
-          .slice(0, 5)
-      : [];
+    const reason =
+    typeof reasonRaw === "string" && reasonRaw.trim()
+    ? reasonRaw.trim()
+    : null;
 
-    return { suspiciousness, reasons };
+    return { suspiciousness, reason };
   } catch {
     // If OpenAI fails, don't break scoring — return a safe fallback
     return { suspiciousness: 0, reasons: ["AI analysis failed"] };

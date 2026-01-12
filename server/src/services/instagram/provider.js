@@ -19,7 +19,7 @@ function readDemoFile() {
 }
 
 // DB by default (אבל רק אם יש MONGODB_URI)
-export async function getInstagramPayload(username, { mode = "db" } = {}) {
+export async function getInstagramPayload(username, { mode = "Auto" } = {}) {
   if (!username || typeof username !== "string") return { ok: false, error: "username_required" };
   const clean = username.trim();
   if (!clean) return { ok: false, error: "username_required" };

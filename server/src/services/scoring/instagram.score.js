@@ -44,7 +44,7 @@ export async function scoreInstagram({ metrics, posts, profile }) {  const reaso
   const label = score >= 4 ? "high" : score >= 2 ? "medium" : "low";
     
   if (reasons.length === 0) {
-    reasons.push("הפרופיל נראה בטוח");
+    reasons.push("לפי הבדיקה שלנו, לא נמצאו סימנים חשודים");
     }
 
   return {
@@ -90,7 +90,7 @@ function avgLikes(m, reasons) {
   if (typeof m.average_likes !== "number") return 0;
 
   if (m.average_likes < 20) {
-    //reasons.push("Very low average likes");
+    reasons.push("כמות הלייקים נמוכה ביחס למה שרואים בדרך כלל בפרופילים פעילים של אנשים אמיתיים.");
     return 22;
   }
 
@@ -109,7 +109,7 @@ function avgCom(m, reasons) {
   if (typeof m.average_comments !== "number") return 0;
 
   if (m.average_comments < 5) {
-    reasons.push("מעט תגובות, ");
+    reasons.push("אין כמעט תגובות על הפוסטים. בדרך כלל בפרופילים אמיתיים יש יותר תגובות.");
     return 15;
   }
 
@@ -123,7 +123,7 @@ function friendsTag(m, reasons) {
   if (typeof m.unique_tagged_users_count !== "number") return 0;
 
   if (m.unique_tagged_users_count === 0) {
-    //reasons.push("No tagged users in recent posts");
+    reasons.push("לא מצאנו תיוגים של חברים בתמונות. פרופיל אמיתי בדרך כלל מתקשר עם אנשים אחרים בסביבה שלו.");
     return 8;
   }
 
@@ -138,19 +138,19 @@ function postsCount(m, reasons) {
   if (typeof m.posts_returned_count !== "number") return 0;
 
   if (m.posts_returned_count < 3) {
-    reasons.push("יש לו מעט מאוד פוסטים");
+    reasons.push("הפרופיל כמעט ריק מתוכן. זה יכול להעיד על חשבון שנפתח ממש לא מזמן למטרה ספציפית.");
     return 15;
   }
 
   if (m.posts_returned_count < 6) {
-    //reasons.push("Few recent posts available");
+    reasons.push("יש כאן מעט מאוד פוסטים, מה שמקשה לדעת אם זה פרופיל אמיתי או לא.");
     return 8;
   }
 
   return 0;
 }
 
-//AI score for posts's captions - suspiciousness score + resons
+//AI score for posts's captions - suspiciousness score + reasons
 async function captionsAI (captions, reasons, username){
     console.log("AI enabled?", isAiEnabled(), "captions:", captions.length);
     let score = 0;
@@ -160,8 +160,11 @@ async function captionsAI (captions, reasons, username){
         const add = Math.round((ai.suspiciousness || 0) * 20);
         score += add;
 
-        // add a couple reasons (short)
-        (ai.reasons || []).slice(0, 3).forEach(r => reasons.push(`Captions: ${r}`));
+        // add a couple reason
+        if (ai?.reason) {
+        reasons.push(`Captions: ${ai.reason}`);
+      }
+
     }
     return {
         score,
